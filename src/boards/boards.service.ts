@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Board, BoardStatus } from './board.model';
+import { CreateBoardDto } from './dto/create-board.dto';
+import { v4 as uuid } from 'uuid';
 
 @Injectable() // 이 클래스는 다른 곳에서 불려가서 사용될 부품이라고 생각하면 쉽다고함
 export class BoardsService {
@@ -13,15 +15,17 @@ export class BoardsService {
     }
 
     // 3. 게시글을 생성하는 함수
-    createBoard(title: string, description: string): Board {
+    createBoard(creatBoardDto: CreateBoardDto): Board {
+        const { title, description } = creatBoardDto
+
         const board: Board = {
-            id: Date.now().toString(), // 임시로 현재시간
+            id: uuid(),
             title,
             description,
-            status: BoardStatus.PUBLIC // 기본값은 공개
+            status: BoardStatus.PUBLIC,
         };
 
-        this.boards.push(board); // 배열에 새 게시글 추가
-        return board; // 생성된 게시글 반환
+        this.boards.push(board);
+        return board;
     }
 }
