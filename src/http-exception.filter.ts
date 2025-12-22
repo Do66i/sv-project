@@ -1,10 +1,4 @@
-import {
-    ExceptionFilter,
-    Catch,
-    ArgumentsHost,
-    HttpException,
-    Logger,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Logger, } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 @Catch(HttpException) // 1. "난 HTTP 관련 에러만 전문적으로 잡겠다"는 스티커 부착
