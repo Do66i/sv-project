@@ -1,4 +1,4 @@
-import { Controller, Body, Get, Post, Logger } from '@nestjs/common'; // 데코레이터들 임포트
+import { Controller, Body, Get, Post, Logger, Param, Delete } from '@nestjs/common'; // 데코레이터들 임포트
 import { BoardsService } from './boards.service';
 import type { Board } from './board.model';
 import { CreateBoardDto } from './dto/create-board.dto';
@@ -28,7 +28,7 @@ export class BoardsController {
         this.logger.log('--------------------------------------');
 
         return result;
-    }
+    };
 
     // 4. 게시글 생성 (POST 요청 처리)
     @Post()
@@ -43,5 +43,19 @@ export class BoardsController {
         this.logger.log('-----------------------------------');
 
         return result;
+    };
+
+    // 5. 게시글 삭제
+    @Delete('/:id')
+    deleteBoard(@Param('id') id: string): { success: boolean; message: string } {
+        this.logger.log(`----- 게시글 삭제 요청 (ID: ${id}) -----`);
+        this.boardsService.deleteBoard(id);
+        this.logger.log('-------------- 삭제완료 -----------');
+        // 삭제 후 성공 메시지를 직접 반환합니다.
+        return {
+            success: true,
+            message: `ID가 "${id}"인 게시글이 성공적으로 삭제되었습니다. ✅`,
+        };
+
     }
 }
