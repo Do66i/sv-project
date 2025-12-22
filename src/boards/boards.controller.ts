@@ -3,6 +3,7 @@ import { BoardsService } from './boards.service';
 import  { BoardStatus } from './board.model';
 import type { Board } from './board.model';
 import { CreateBoardDto } from './dto/create-board.dto';
+import { UpdateBoardStatusDto } from './dto/update-board-status.dto';
 
 @Controller('boards') // 1. 접속 경로 설정 : 이 클래스는  'localhost:3000/boards' 경로로 접속할 때 사용됨
 export class BoardsController {
@@ -29,7 +30,7 @@ export class BoardsController {
         this.logger.log('--------------------------------------');
 
         return result;
-    };
+    }
 
     // 4. 게시글 생성 (POST 요청 처리)
     @Post()
@@ -44,11 +45,14 @@ export class BoardsController {
         this.logger.log('-----------------------------------');
 
         return result;
-    };
+    }
 
     // 5. 게시글 삭제
     @Delete('/:id')
-    deleteBoard(@Param('id') id: string): { success: boolean; message: string } {
+    deleteBoard(@Param('id') id: string): {
+        success: boolean;
+        message: string;
+    } {
         this.logger.log(`----- 게시글 삭제 요청 (ID: ${id}) -----`);
         this.boardsService.deleteBoard(id);
         this.logger.log('-------------- 삭제완료 -----------');
@@ -57,15 +61,20 @@ export class BoardsController {
             success: true,
             message: `ID가 "${id}"인 게시글이 성공적으로 삭제되었습니다. ✅`,
         };
-
-    };
+    }
 
     // 6. 게시글 상태 수정
     @Patch('/:id/status')
     updateBoardStatus(
         @Param('id') id: string,
-        @Body('status') status: BoardStatus,
-    ): Board {
-        return this.boardsService.patchBoardStatus(id, status);
+        @Body() UpdateBoardStatusDto: UpdateBoardStatusDto,
+        ): { success: boolean; message: string, board: Board } {
+        const { status } = UpdateBoardStatusDto;
+        const updatedBoard = this.boardsService.patchBoardStatus(id, status);
+        return {
+            success: true,
+            message: `ID가 "${id}"인 게시글이 성공적으로 상태변경 되었습니다. ✅`,
+            board: updatedBoard,
+        };
     }
 }

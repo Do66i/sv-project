@@ -48,6 +48,7 @@ export class BoardsService {
     getBoardById(id: string): Board {
         const found = this.boards.find((board) => board.id === id);
         // ID 없다면 에러
+        console.log('>>>>>> ???????????? >', found)
         if (!found) {
           throw new NotFoundException(
               `ID가 "${id}"인 게시글을 찾을 수 없습니다. 😭`,
