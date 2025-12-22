@@ -1,5 +1,6 @@
-import { Controller, Body, Get, Post, Logger, Param, Delete } from '@nestjs/common'; // 데코레이터들 임포트
+import { Controller, Body, Get, Post, Logger, Param, Delete, Patch } from '@nestjs/common'; // 데코레이터들 임포트
 import { BoardsService } from './boards.service';
+import  { BoardStatus } from './board.model';
 import type { Board } from './board.model';
 import { CreateBoardDto } from './dto/create-board.dto';
 
@@ -57,5 +58,14 @@ export class BoardsController {
             message: `ID가 "${id}"인 게시글이 성공적으로 삭제되었습니다. ✅`,
         };
 
+    };
+
+    // 6. 게시글 상태 수정
+    @Patch('/:id/status')
+    updateBoardStatus(
+        @Param('id') id: string,
+        @Body('status') status: BoardStatus,
+    ): Board {
+        return this.boardsService.patchBoardStatus(id, status);
     }
 }

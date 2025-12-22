@@ -33,6 +33,15 @@ export class BoardsService {
     deleteBoard(id: string): void {
         const found = this.getBoardById(id);
         this.boards = this.boards.filter((board) => board.id !== found.id);
+    };
+
+    // 5. 특정 게시글 상태 변경 함수
+    patchBoardStatus(id: string, status: BoardStatus): Board {
+        // 게시글 먼저 찾기
+        const board = this.getBoardById(id);
+        // 찾은 게시글의 상태를 전달받은 status로 변경
+        board.status = status;
+        return board;
     }
 
     // 게시글 아이디 검증
