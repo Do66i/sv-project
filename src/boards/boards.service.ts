@@ -1,59 +1,70 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Board, BoardStatus } from './board.model';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Board } from './boards.entity'; // 인터페이스가 아닌 Entity를 가져옵니다.
 import { CreateBoardDto } from './dto/create-board.dto';
-import { v4 as uuid } from 'uuid';
+import { BoardStatus } from './board.model';
+import { BOARD_MESSAGES } from '../common/constants/error-messages';
 
-@Injectable() // 이 클래스는 다른 곳에서 불려가서 사용될 부품이라고 생각하면 쉽다고함
+@Injectable()
 export class BoardsService {
-    // 1. 데이터 저장소 (추후 DB랑 연결)
-    private boards: Board[] = [];
+    constructor(
+        @InjectRepository(Board)
+        private boardRepository: Repository<Board>,
+    ) {}
 
-    // 2. 모든 게시글을 가져오는 함수
-    // 리턴 타입이 Board[]를 명시
-    getAllBoards(): Board[] {
-        return this.boards;
+    // 1. 모든 게시글 가져오기
+    async getAllBoards(): Promise<Board[]> {
+        return await this.boardRepository.find();
     }
 
-    // 3. 게시글을 생성하는 함수
-    createBoard(creatBoardDto: CreateBoardDto): Board {
-        const { title, description } = creatBoardDto;
+    // 2. 게시글 생성하기
+    async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+        const { title, description } = createBoardDto;
 
-        const board: Board = {
-            id: uuid(),
+        const board = this.boardRepository.create({
             title,
             description,
             status: BoardStatus.PUBLIC,
-        };
+        });
 
-        this.boards.push(board);
-        return board;
-    };
-
-    // 4. 게시글을 삭제하는 함수
-    deleteBoard(id: string): void {
-        const found = this.getBoardById(id);
-        this.boards = this.boards.filter((board) => board.id !== found.id);
-    };
-
-    // 5. 특정 게시글 상태 변경 함수
-    patchBoardStatus(id: string, status: BoardStatus): Board {
-        // 게시글 먼저 찾기
-        const board = this.getBoardById(id);
-        // 찾은 게시글의 상태를 전달받은 status로 변경
-        board.status = status;
+        await this.boardRepository.save(board);
         return board;
     }
 
-    // 게시글 아이디 검증
-    getBoardById(id: string): Board {
-        const found = this.boards.find((board) => board.id === id);
-        // ID 없다면 에러
-        console.log('>>>>>> ???????????? >', found)
+    // 3. ID로 게시글 찾기 (검증 포함)
+    async getBoardById(id: number): Promise<Board> {
+        // MySQL 자동생성 ID는 보통 number입니다.
+        const found = await this.boardRepository.findOneBy({ id });
+
         if (!found) {
-          throw new NotFoundException(
-              `ID가 "${id}"인 게시글을 찾을 수 없습니다. 😭`,
-          );
+            throw new NotFoundException(
+                BOARD_MESSAGES.NOT_FOUND(id.toString()),
+            );
         }
+
         return found;
-    };
+    }
+
+    // 4. 게시글 삭제하기
+    async deleteBoard(id: number): Promise<void> {
+        const result = await this.boardRepository.delete(id);
+
+        // delete 결과에 영향을 받은 행(affected)이 0개면 에러
+        if (result.affected === 0) {
+            throw new NotFoundException(
+                BOARD_MESSAGES.NOT_FOUND(id.toString()),
+            );
+        }
+    }
+
+    // 5. 게시글 상태 변경하기
+    async patchBoardStatus(id: number, status: BoardStatus): Promise<Board> {
+        const board = await this.getBoardById(id);
+
+        board.status = status;
+        await this.boardRepository.save(board);
+
+        return board;
+    }
 }
