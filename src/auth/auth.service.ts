@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { AuthCredentialDto } from './dto/auth-credential.dto';
 import * as bcrypt from 'bcryptjs';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -11,6 +12,7 @@ export class AuthService {
         // @InjectRepository를 통해 User 엔티티를 다루는 저장소(Repository)를 주입받습니다.
         @InjectRepository(User)
         private userRepository: Repository<User>,
+        private jwtService: JwtService,
     ) {}
 
     // 회원가입 기능
@@ -62,6 +64,11 @@ export class AuthService {
         // 2. 유저가 존재하고, 비밀번호가 일치하는지 확인
         // bcrypt.compare(입력비번, DB암호비번) -> 일치하면 true를 반환합니다.
         if (user && (await bcrypt.compare(password, user.password))) {
+            // 유저명만 담은 페이로드(데이터 보따리)를 만듭니다.
+            const payload = { username };
+
+            // JwtService를 이용해 페이로드를 암호화하여 토큰을 생성
+            const accessToken = await this.jwtService.sign(payload);
             return { message: '로그인 성공 ! 🔓' };
         } else {
             // 유저가 없거나 비번이 틀린 경우 보안을 위해 동일하게 "로그인 실패" 메시지를 보냅니다.
