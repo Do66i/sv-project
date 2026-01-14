@@ -24,6 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         const { username } = payload;
         const user: User | null = await this.userRepository.findOneBy({ username });
 
+        console.log('>>>>>>> !!!!!!!!!!!!!!!!!!!!!!!!!', user)
         if (!user) {
             throw new UnauthorizedException('토큰이.. 이상한듯한데.....!️');
         }
