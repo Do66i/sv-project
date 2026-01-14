@@ -1,9 +1,11 @@
-import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, UseGuards, ParseIntPipe,
+} from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { BoardStatus } from './boards.model';
 import { Board } from './boards.entity'; // 반드시 entity 파일이 존재해야 합니다!
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardStatusDto } from './dto/update-board-status.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '../auth/user.entity';
 import { GetUser } from '../auth/get-user.decorator';// 유저를 꺼내오는 편리한 도구
@@ -56,14 +58,19 @@ export class BoardsController {
 
     // 3. 게시글 삭제
     @Delete('/:id')
-    @UseGuards(AuthGuard()) // 인증 가드 적용
+    @UseGuards(JwtAuthGuard) // 인증 가드 적용
     async deleteBoard(
-        @Param('id') id: number,
+        @Param('id', ParseIntPipe) id: number,
+        @GetUser() user: User, // 현재 로그인한 유저 정보 가져오기
     ): Promise<{ success: boolean; message: string }> {
         this.logger.log(`----- 게시글 삭제 요청 (ID: ${id}) -----`);
 
         // deleteBoard가 async 함수이므로 await 추가
-        await this.boardsService.deleteBoard(id);
+        await this.boardsService.deleteBoard(id, user);
+
+        this.logger.log(`@@@@@@ user ????? ${JSON.stringify(user)}`);
+        this.logger.log(`ID가 "${id}"인 게시글이 삭제되었습니다.`);
+        this.logger.log('--------------------------------------');
 
         return {
             success: true,
