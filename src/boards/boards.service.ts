@@ -72,4 +72,16 @@ export class BoardsService {
 
         return board;
     }
+
+    // 6. 내가 쓴 게시물 가져오기
+    async getMyBoards(user: User): Promise<Board[]> {
+        // Query Builder를 사용해서 userId가 일치하는 것만 필터링
+        const query = this.boardRepository.createQueryBuilder('board');
+        console.log('>>>>>>>', query);
+
+        query.where('board.userId = :userId', { userId: user.id });
+
+        // getMany = 여러 개 가져오기
+        return await query.getMany();
+    }
 }

@@ -99,4 +99,16 @@ export class BoardsController {
             board: updatedBoard,
         };
     }
+
+    // 5. 내가 쓴 게시글만 조회
+    @Get('/my')
+    @UseGuards(AuthGuard()) // 인증 가드 적용
+    async getMyBoards(
+        @GetUser() user: User, // 현재 로그인한 유저 정보 가져오기
+    ): Promise<Board[]> {
+        this.logger.log(
+            `[My Boards] 유저 ${user.username}가 자신의 글 목록을 요청했습니다.`,
+        );
+        return this.boardsService.getMyBoards(user); // 새로운 서비스 함수 호출
+    }
 }
