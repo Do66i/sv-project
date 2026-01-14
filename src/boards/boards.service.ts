@@ -34,7 +34,10 @@ export class BoardsService {
     }
 
     // 2. 게시글 생성하기
-    async createBoard(createBoardDto: CreateBoardDto, user: User): Promise<Board> {
+    async createBoard(
+        createBoardDto: CreateBoardDto,
+        user: User,
+    ): Promise<Board> {
         const { title, description } = createBoardDto;
 
         const board = this.boardRepository.create({
@@ -78,8 +81,20 @@ export class BoardsService {
     }
 
     // 5. 게시글 상태 변경하기
-    async patchBoardStatus(id: number, status: BoardStatus): Promise<Board> {
-        const board = await this.getBoardById(id);
+    async updateBoardStatus(
+        id: number,
+        status: BoardStatus,
+        user: User,
+    ): Promise<Board> {
+        const board = await this.boardRepository.findOne({
+            where: { id, user: { id: user.id } },
+        });
+
+        if (!board) {
+            throw new NotFoundException(
+                BOARD_MESSAGES.NOT_FOUND(id.toString()),
+            );
+        }
 
         board.status = status;
         await this.boardRepository.save(board);

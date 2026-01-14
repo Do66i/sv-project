@@ -89,17 +89,21 @@ export class BoardsController {
 
     // 4. 상태 수정
     @Patch('/:id/status')
-    @UseGuards(AuthGuard()) // 인증 가드 적용
+    @UseGuards(JwtAuthGuard)
     async updateBoardStatus(
-        @Param('id') id: number, // 파라미터 타입을 number로 변경
-        @Body() updateBoardStatusDto: UpdateBoardStatusDto,
+        @Param('id', ParseIntPipe) id: number,
+        @Body('status') status: BoardStatus, // Body에서 직접 status를 받음
+        @GetUser() user: User,
     ): Promise<{ success: boolean; message: string; board: Board }> {
-        const { status } = updateBoardStatusDto;
+        this.logger.log(
+            `----- 게시글 상태 수정 요청 (ID: ${id}, 유저: ${user.username}) -----`,
+        );
 
-        // await 추가
-        const updatedBoard = await this.boardsService.patchBoardStatus(
+        // 서비스 호출 시 user 객체도 반드시 같이 넘겨줘야 권한 체크가 가능해!
+        const updatedBoard = await this.boardsService.updateBoardStatus(
             id,
             status,
+            user,
         );
 
         return {
