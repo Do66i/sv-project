@@ -1,8 +1,16 @@
-import { Controller } from '@nestjs/common';
+import {
+    Controller,
+    Param,
+    ParseIntPipe,
+    UseGuards,
+    UsePipes,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Post, ValidationPipe, Body } from '@nestjs/common';
+import { Post, ValidationPipe, Body , Get} from '@nestjs/common';
 import { AuthCredentialDto } from './dto/auth-credential.dto';
 import { User } from './user.entity';
+import { AuthGuard } from '@nestjs/passport'; // JWT 인증 가드 임포트
+import { GetUser } from './get-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -25,5 +33,35 @@ export class AuthController {
         @Body(ValidationPipe) authCredentialsDto: AuthCredentialDto,
     ): Promise<{ message: string }> {
         return this.authService.signIn(authCredentialsDto);
+    }
+
+    // 현재 인증된 유저 정보 조회 핸들러
+    @Get('/me')
+    @UseGuards(AuthGuard()) // [중요] 토큰이 있어야만 이 함수가 실행돼!
+    getMe(@GetUser() user: User) {
+        // @GetUser()가 토큰을 까서 유저 정보를 이미 다 가져온 상태야.
+        // password는 엔티티 설정이나 서비스 로직에 의해 이미 걸러져 있을 거야.
+        return {
+            success: true,
+            message: '로그인 세션이 유효합니다. ✅',
+            user: {
+                id: user.id,
+                username: user.username,
+            },
+        };
+    }
+
+    // 로그아웃 요청 처리 핸들러 (기본만. 보통 JWT는 클라이언트에서 토큰을 삭제하여 로그아웃 처리)
+    @Post('/logout')
+    @UseGuards(AuthGuard()) // 토큰이 없다면 접근불가
+    logout(@GetUser() user: User) {
+        // 로그에 누가 로그아웃했는지 남겨주면 관리하기 좋겠지?
+        console.log(`${user.username}님이 로그아웃을 시도합니다.`);
+
+        return {
+            success: true,
+            message:
+                '서버 로그아웃 처리가 완료되었습니다. 클라이언트는 저장된 토큰을 파기하세요.',
+        };
     }
 }

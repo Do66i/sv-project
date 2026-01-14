@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, InternalServerErrorException, UnauthorizedException, } from '@nestjs/common';
+import {
+    ConflictException,
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -55,26 +61,49 @@ export class AuthService {
     // 로그인 기능
     async signIn(
         authCredentialsDto: AuthCredentialDto,
-    ): Promise<{ message: string; user: User; accessToken: string }> {
+    ): Promise<{ message: string; user: Partial<User>; accessToken: string }> {
         const { username, password } = authCredentialsDto;
 
         // 1. DB에서 해당 유저명을 가진 유저 탐색
-        const user = await this.userRepository.findOneBy({ username });
+        const user = await this.userRepository.findOne({
+            where: { username },
+            select: ['id', 'username', 'password'], // password를 포함하라고 직접 말해줘야 함!
+        });
 
         // 2. 유저가 존재하고, 비밀번호가 일치하는지 확인
         // bcrypt.compare(입력비번, DB암호비번) -> 일치하면 true를 반환합니다.
         if (user && (await bcrypt.compare(password, user.password))) {
             // 유저명만 담은 페이로드(데이터 보따리)를 만듭니다.
             const payload = { username };
-
             // JwtService를 이용해 페이로드를 암호화하여 토큰을 생성
             const accessToken = await this.jwtService.sign(payload);
-            return { message: '로그인 성공 ! 🔓', user, accessToken };
+
+            // [수정] password만 따로 빼고, 나머지는 'rest'라는 이름에 담아줘
+            const { password: _, ...userWithoutPassword } = user;
+
+            return {
+                message: '로그인 성공 ! 🔓',
+                user: userWithoutPassword,
+                accessToken,
+            };
         } else {
             // 유저가 없거나 비번이 틀린 경우 보안을 위해 동일하게 "로그인 실패" 메시지를 보냅니다.
             throw new UnauthorizedException(
                 '로그인 정보가 올바르지 않습니다. 🤷‍♂️',
             );
         }
+    }
+
+    async findUserById(id: number): Promise<User>{
+        const user = await this.userRepository.findOne({
+            where: { id },
+            select: ['id', 'username'], // password를 제외한 정보만 선택
+        })
+
+        if (!user) {
+            throw new NotFoundException(`ID가 ${id}인 유저를 찾을 수 없어! 🧐`);
+        }
+
+        return user;
     }
 }
