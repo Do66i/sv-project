@@ -6,6 +6,7 @@ import { User } from '../auth/user.entity';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { BoardStatus } from './boards.model';
 import { BOARD_MESSAGES } from '../common/constants/error-messages';
+import { UpdateBoardDto } from './dto/update-board.dto';
 
 @Injectable()
 export class BoardsService {
@@ -98,6 +99,34 @@ export class BoardsService {
 
         board.status = status;
         await this.boardRepository.save(board);
+
+        return board;
+    }
+
+    // 5-1. 게시글 수정하기
+    async updateBoard(
+        id: number,
+        updateBoardDto: UpdateBoardDto,
+        user: User
+    ): Promise<Board> {
+        const { title, description } = updateBoardDto;
+
+        // 내 게시글인지 확인
+        const board = await this.boardRepository.findOne({
+            where: { id, user: { id: user.id } },
+        });
+
+        if (!board) {
+            throw new NotFoundException(
+                BOARD_MESSAGES.NOT_FOUND(id.toString()),
+            );
+        }
+
+        // 업데이트할 필드만 수정
+        if (title) board.title = title;
+        if (description) board.description = description;
+
+        await this.boardRepository.save(board); // 변경사항 저장
 
         return board;
     }

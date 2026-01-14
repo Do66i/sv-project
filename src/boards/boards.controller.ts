@@ -9,6 +9,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { User } from '../auth/user.entity';
 import { GetUser } from '../auth/get-user.decorator';
 import { BoardStatusValidationPipe } from './pipe/board-status-validation.pipe';
+import { UpdateBoardDto } from './dto/update-board.dto';
 
 // 유저를 꺼내오는 편리한 도구
 
@@ -113,6 +114,23 @@ export class BoardsController {
             success: true,
             message: `ID가 "${id}"인 게시글이 성공적으로 상태변경 되었습니다. ✅`,
             board: updatedBoard,
+        };
+    }
+
+    // 4-1. 게시글 수정
+    @Patch('/:id')
+    @UseGuards(JwtAuthGuard)
+    async updateBoard(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() updateBoardDto: UpdateBoardDto,
+        @GetUser() user:User
+    ): Promise<{ success: boolean; message: string, board: Board }> {
+        const updatdeBoard = await this.boardsService.updateBoard(id, updateBoardDto, user);
+
+        return {
+            success: true,
+            message: `ID가 "${id}"인 게시글이 성공적으로 수정되었습니다. ✅`,
+            board: updatdeBoard,
         };
     }
 
