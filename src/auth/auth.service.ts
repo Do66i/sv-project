@@ -55,7 +55,7 @@ export class AuthService {
     // 로그인 기능
     async signIn(
         authCredentialsDto: AuthCredentialDto,
-    ): Promise<{ message: string }> {
+    ): Promise<{ message: string; user: User; accessToken: string }> {
         const { username, password } = authCredentialsDto;
 
         // 1. DB에서 해당 유저명을 가진 유저 탐색
@@ -69,7 +69,7 @@ export class AuthService {
 
             // JwtService를 이용해 페이로드를 암호화하여 토큰을 생성
             const accessToken = await this.jwtService.sign(payload);
-            return { message: '로그인 성공 ! 🔓' };
+            return { message: '로그인 성공 ! 🔓', user, accessToken };
         } else {
             // 유저가 없거나 비번이 틀린 경우 보안을 위해 동일하게 "로그인 실패" 메시지를 보냅니다.
             throw new UnauthorizedException(

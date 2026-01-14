@@ -1,11 +1,13 @@
-import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, } from '@nestjs/common';
+import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, UseGuards } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { BoardStatus } from './board.model';
 import { Board } from './boards.entity'; // 반드시 entity 파일이 존재해야 합니다!
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardStatusDto } from './dto/update-board-status.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('boards')
+@UseGuards(AuthGuard()) // 인증 가드 적용
 export class BoardsController {
     private logger = new Logger('BoardsController');
 
