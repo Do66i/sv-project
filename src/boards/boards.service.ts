@@ -15,8 +15,22 @@ export class BoardsService {
     ) {}
 
     // 1. 모든 게시글 가져오기
-    async getAllBoards(): Promise<Board[]> {
-        return await this.boardRepository.find({ relations: ['user'] });
+    async getAllBoards(search?: string): Promise<Board[]> {
+        const query = this.boardRepository
+            .createQueryBuilder('board')
+            .leftJoinAndSelect('board.user', 'user'); // relations: ['user']와 똑같은 역할!
+        // note: createQueryBuilder ? TypeORM에서 제공하는 쿼리 빌더로, 복잡한 쿼리를 작성할 때 유용합니다.
+
+        if (search) {
+            query.andWhere(
+                '(board.title LIKE :search OR board.description LIKE :search)',
+                // board.title LIKE : search OR board.description LIKE: search ? title 또는 description에 검색어가 포함된 게시글을 찾습니다.
+                { search: `%${search}%` },
+            );
+        }
+
+        return await query.getMany();
+        // return await this.boardRepository.find({ relations: ['user'] });
     }
 
     // 2. 게시글 생성하기
@@ -77,7 +91,6 @@ export class BoardsService {
     async getMyBoards(user: User): Promise<Board[]> {
         // Query Builder를 사용해서 userId가 일치하는 것만 필터링
         const query = this.boardRepository.createQueryBuilder('board');
-        console.log('>>>>>>>', query);
 
         query.where('board.userId = :userId', { userId: user.id });
 

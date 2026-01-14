@@ -1,5 +1,4 @@
-import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, UseGuards, ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, UseGuards, ParseIntPipe, Query, } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { BoardStatus } from './boards.model';
 import { Board } from './boards.entity'; // 반드시 entity 파일이 존재해야 합니다!
@@ -18,17 +17,27 @@ export class BoardsController {
 
     // 1. 전체 조회
     @Get()
-    async getAllBoards(): Promise<Board[]> {
+    async getAllBoards(
+        @Query('search') search: string,
+    ): Promise<{ success: boolean; result: Board[] }> {
         // Promise와 async 추가
         this.logger.log('----- 전체 게시글 조회 요청 (GET) -----');
 
+        if (search) {
+            this.logger.log(`================= 검색어: ${search} 필터링 적용 `);
+        }
+
         // await를 붙여야 Promise가 아닌 실제 Board[] 배열이 나옵니다.
-        const result = await this.boardsService.getAllBoards();
+        const result = await this.boardsService.getAllBoards(search);
+        const success = result.length > 0;
 
         this.logger.log(`조회된 게시글 수: ${result.length}개`);
         this.logger.log('--------------------------------------');
 
-        return result;
+        return {
+            success: success,
+            result,
+        };
     }
 
     // 2. 게시글 생성
