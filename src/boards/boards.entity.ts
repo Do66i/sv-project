@@ -1,18 +1,21 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { BoardStatus } from './board.model';
+import { BoardStatus } from './boards.model';
+import { User } from '../auth/user.entity'; // [체크] 유저 엔티티를 정확히 가져와야 함
+import { BaseEntity, Column, Entity, ManyToOne, PrimaryGeneratedColumn, } from 'typeorm';
 
-@Entity() // 이 클래스가 DB 테이블임을 나타냄
+@Entity()
 export class Board extends BaseEntity {
-    @PrimaryGeneratedColumn() // 자동으로 늘어나느 숫자 ID
+    @PrimaryGeneratedColumn()
     id: number;
 
-    @Column() // 제목
+    @Column()
     title: string;
 
-    @Column() // 내용
+    @Column()
     description: string;
 
-    @Column() // 상태
+    @Column()
     status: BoardStatus;
-}
 
+    @ManyToOne((type) => User, (user) => user.boards, { eager: false })
+    user: User; // 이 줄이 있어야 서비스에서 board.user를 인식
+}

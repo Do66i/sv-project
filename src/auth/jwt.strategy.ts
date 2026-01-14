@@ -29,9 +29,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
 
         // 여기서 리턴한 user 객체는 요청(Request) 객체에 자동으로 담깁니다. (req.user)
-        return {
-            user,
-            message: '토큰검증완료 📌',
-        };
+        return user;
     }
 }

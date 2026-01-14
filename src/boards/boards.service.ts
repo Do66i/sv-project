@@ -2,8 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Board } from './boards.entity'; // 인터페이스가 아닌 Entity를 가져옵니다.
+import { User } from '../auth/user.entity';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { BoardStatus } from './board.model';
+import { BoardStatus } from './boards.model';
 import { BOARD_MESSAGES } from '../common/constants/error-messages';
 
 @Injectable()
@@ -15,17 +16,18 @@ export class BoardsService {
 
     // 1. 모든 게시글 가져오기
     async getAllBoards(): Promise<Board[]> {
-        return await this.boardRepository.find();
+        return await this.boardRepository.find({ relations: ['user'] });
     }
 
     // 2. 게시글 생성하기
-    async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+    async createBoard(createBoardDto: CreateBoardDto, user: User): Promise<Board> {
         const { title, description } = createBoardDto;
 
         const board = this.boardRepository.create({
             title,
             description,
             status: BoardStatus.PUBLIC,
+            user, // 작성자 정보도 함께 저장
         });
 
         await this.boardRepository.save(board);

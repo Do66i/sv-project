@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { BoardStatus } from '../board.model';
+import { BoardStatus } from '../boards.model';
 
 export class UpdateBoardStatusDto {
     @IsNotEmpty({ message: '상태값 is 필수! ❌' })

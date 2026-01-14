@@ -1,13 +1,14 @@
 import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, UseGuards } from '@nestjs/common';
 import { BoardsService } from './boards.service';
-import { BoardStatus } from './board.model';
+import { BoardStatus } from './boards.model';
 import { Board } from './boards.entity'; // 반드시 entity 파일이 존재해야 합니다!
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardStatusDto } from './dto/update-board-status.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { User } from '../auth/user.entity';
+import { GetUser } from '../auth/get-user.decorator';// 유저를 꺼내오는 편리한 도구
 
 @Controller('boards')
-@UseGuards(AuthGuard()) // 인증 가드 적용
 export class BoardsController {
     private logger = new Logger('BoardsController');
 
@@ -30,18 +31,32 @@ export class BoardsController {
 
     // 2. 게시글 생성
     @Post()
-    async createBoard(@Body() createBoardDto: CreateBoardDto): Promise<Board> {
-        this.logger.log('----- 게시글 생성 요청 (POST) -----');
+    @UseGuards(AuthGuard()) // 인증 가드 적용
+    async createBoard(
+        @Body() createBoardDto: CreateBoardDto,
+        @GetUser() user: User, // 작성자 정보도 함께 받기
+    ): Promise<{ board: Board; message: string }> {
+        this.logger.log(
+            `----- 게시글 생성 요청 (User: ${user.username})(POST) -----`,
+        );
 
         // await 추가
-        const result = await this.boardsService.createBoard(createBoardDto);
+        const board = await this.boardsService.createBoard(
+            createBoardDto,
+            user,
+        );
 
-        this.logger.log(`생성 결과: ${JSON.stringify(result)}`);
-        return result;
+        this.logger.log(`생성 결과: ${JSON.stringify(board)}`);
+        this.logger.log('--------------------------------------');
+        return {
+            board,
+            message: `게시글이 성공적으로 생성되었습니다. ✅`,
+        };
     }
 
     // 3. 게시글 삭제
     @Delete('/:id')
+    @UseGuards(AuthGuard()) // 인증 가드 적용
     async deleteBoard(
         @Param('id') id: number,
     ): Promise<{ success: boolean; message: string }> {
@@ -58,6 +73,7 @@ export class BoardsController {
 
     // 4. 상태 수정
     @Patch('/:id/status')
+    @UseGuards(AuthGuard()) // 인증 가드 적용
     async updateBoardStatus(
         @Param('id') id: number, // 파라미터 타입을 number로 변경
         @Body() updateBoardStatusDto: UpdateBoardStatusDto,

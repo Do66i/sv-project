@@ -25,7 +25,7 @@ src
     ├── boards.module.ts
     ├── boards.controller.ts # 요청 처리 (안내원)
     ├── boards.service.ts    # 비즈니스 로직 (일꾼)
-    ├── board.model.ts      # 게시글 데이터 정의
+    ├── boards.model.ts      # 게시글 데이터 정의
     └── dto                 # 데이터 전송 객체
         └── create-board.dto.ts
 ```
