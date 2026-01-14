@@ -7,7 +7,10 @@ import { UpdateBoardStatusDto } from './dto/update-board-status.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '../auth/user.entity';
-import { GetUser } from '../auth/get-user.decorator';// 유저를 꺼내오는 편리한 도구
+import { GetUser } from '../auth/get-user.decorator';
+import { BoardStatusValidationPipe } from './pipe/board-status-validation.pipe';
+
+// 유저를 꺼내오는 편리한 도구
 
 @Controller('boards')
 export class BoardsController {
@@ -92,7 +95,7 @@ export class BoardsController {
     @UseGuards(JwtAuthGuard)
     async updateBoardStatus(
         @Param('id', ParseIntPipe) id: number,
-        @Body('status') status: BoardStatus, // Body에서 직접 status를 받음
+        @Body('status', BoardStatusValidationPipe) status: BoardStatus, // Body에서 직접 status를 받음
         @GetUser() user: User,
     ): Promise<{ success: boolean; message: string; board: Board }> {
         this.logger.log(
