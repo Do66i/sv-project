@@ -10,9 +10,12 @@ import { User } from '../auth/user.entity';
 import { GetUser } from '../auth/get-user.decorator';
 import { BoardStatusValidationPipe } from './pipe/board-status-validation.pipe';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+@ApiTags('Boards') // Swagger UI에서 그룹화
+@ApiBearerAuth('accessToken') // JWT 인증 사용 표시
 
 // 유저를 꺼내오는 편리한 도구
-
 @Controller('boards')
 export class BoardsController {
     private logger = new Logger('BoardsController');
@@ -21,6 +24,10 @@ export class BoardsController {
 
     // 1. 전체 조회
     @Get()
+    @ApiOperation({
+        summary: '전체 게시글 조회',
+        description: '모든 게시글을 조회합니다. 검색어로 필터링할 수 있습니다.',
+    })
     async getAllBoards(
         @Query('search') search: string,
     ): Promise<{ success: boolean; result: Board[] }> {
@@ -46,6 +53,14 @@ export class BoardsController {
 
     // 2. 게시글 생성
     @Post()
+    @ApiOperation({
+        summary: '게시글 생성',
+        description: '새로운 게시글을 생성합니다.',
+    })
+    @ApiBody({
+        description: '게시글 생성 DTO',
+        type: CreateBoardDto,
+    })
     @UseGuards(AuthGuard()) // 인증 가드 적용
     async createBoard(
         @Body() createBoardDto: CreateBoardDto,
@@ -71,6 +86,10 @@ export class BoardsController {
 
     // 3. 게시글 삭제
     @Delete('/:id')
+    @ApiOperation({
+        summary: '게시글 삭제',
+        description: '지정한 ID의 게시글을 삭제합니다.',
+    })
     @UseGuards(JwtAuthGuard) // 인증 가드 적용
     async deleteBoard(
         @Param('id', ParseIntPipe) id: number,
@@ -93,6 +112,14 @@ export class BoardsController {
 
     // 4. 상태 수정
     @Patch('/:id/status')
+    @ApiOperation({
+        summary: '게시글 상태 수정',
+        description: '지정한 ID의 게시글 상태를 수정합니다.',
+    })
+    @ApiBody({
+        description: '게시글 상태 수정 DTO',
+        type: UpdateBoardStatusDto,
+    })
     @UseGuards(JwtAuthGuard)
     async updateBoardStatus(
         @Param('id', ParseIntPipe) id: number,
@@ -119,6 +146,14 @@ export class BoardsController {
 
     // 4-1. 게시글 수정
     @Patch('/:id')
+    @ApiOperation({
+        summary: '게시글 수정',
+        description: '지정한 ID의 게시글을 수정합니다.',
+    })
+    @ApiBody({
+        description: '게시글 수정 DTO',
+        type: UpdateBoardDto,
+    })
     @UseGuards(JwtAuthGuard)
     async updateBoard(
         @Param('id', ParseIntPipe) id: number,
@@ -136,6 +171,13 @@ export class BoardsController {
 
     // 5. 내가 쓴 게시글만 조회
     @Get('/my')
+    @ApiOperation({
+        summary: '내가 쓴 게시글 조회',
+        description: '현재 로그인한 사용자가 작성한 게시글만 조회합니다.',
+    })
+    @ApiBody({
+        description: '현재 로그인한 사용자 정보',
+    })
     @UseGuards(AuthGuard()) // 인증 가드 적용
     async getMyBoards(
         @GetUser() user: User, // 현재 로그인한 유저 정보 가져오기
