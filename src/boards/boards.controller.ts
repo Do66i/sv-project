@@ -12,179 +12,69 @@ import { BoardStatusValidationPipe } from './pipe/board-status-validation.pipe';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-@ApiTags('Boards') // Swagger UI에서 그룹화
-@ApiBearerAuth('accessToken') // JWT 인증 사용 표시
+@ApiTags('Boards')
+@ApiBearerAuth('accessToken')
 
-// 유저를 꺼내오는 편리한 도구
 @Controller('boards')
 export class BoardsController {
     private logger = new Logger('BoardsController');
-
     constructor(private boardsService: BoardsService) {}
 
-    // 1. 전체 조회
     @Get()
-    @ApiOperation({
-        summary: '전체 게시글 조회',
-        description: '모든 게시글을 조회합니다. 검색어로 필터링할 수 있습니다.',
-    })
-    async getAllBoards(
-        @Query('search') search: string,
-    ): Promise<{ success: boolean; result: Board[] }> {
-        // Promise와 async 추가
-        this.logger.log('----- 전체 게시글 조회 요청 (GET) -----');
-
-        if (search) {
-            this.logger.log(`================= 검색어: ${search} 필터링 적용 `);
-        }
-
-        // await를 붙여야 Promise가 아닌 실제 Board[] 배열이 나옵니다.
+    @ApiOperation({ summary: '전체 게시글 조회', description: '검색어로 필터링하여 모든 게시글을 조회합니다.' })
+    async getAllBoards(@Query('search') search: string) {
+        this.logger.log('----- 전체 게시글 조회 요청 -----');
         const result = await this.boardsService.getAllBoards(search);
-        const success = result.length > 0;
-
-        this.logger.log(`조회된 게시글 수: ${result.length}개`);
-        this.logger.log('--------------------------------------');
-
-        return {
-            success: success,
-            result,
-        };
+        return { success: result.length > 0, result };
     }
 
-    // 2. 게시글 생성
     @Post()
-    @ApiOperation({
-        summary: '게시글 생성',
-        description: '새로운 게시글을 생성합니다.',
-    })
-    @ApiBody({
-        description: '게시글 생성 DTO',
-        type: CreateBoardDto,
-    })
-    @UseGuards(AuthGuard()) // 인증 가드 적용
+    @ApiOperation({ summary: '게시글 생성' })
+    @UseGuards(AuthGuard())
     async createBoard(
-        @Body() createBoardDto: CreateBoardDto,
-        @GetUser() user: User, // 작성자 정보도 함께 받기
-    ): Promise<{ board: Board; message: string }> {
-        this.logger.log(
-            `----- 게시글 생성 요청 (User: ${user.username})(POST) -----`,
-        );
-
-        // await 추가
-        const board = await this.boardsService.createBoard(
-            createBoardDto,
-            user,
-        );
-
-        this.logger.log(`생성 결과: ${JSON.stringify(board)}`);
-        this.logger.log('--------------------------------------');
-        return {
-            board,
-            message: `게시글이 성공적으로 생성되었습니다. ✅`,
-        };
+        @Body() createBoardDto: CreateBoardDto, // @ApiBody 없이도 CreateBoardDto 구조가 노출됨
+        @GetUser() user: User,
+    ) {
+        const board = await this.boardsService.createBoard(createBoardDto, user);
+        return { board, message: '게시글이 성공적으로 생성되었습니다. ✅' };
     }
 
-    // 3. 게시글 삭제
     @Delete('/:id')
-    @ApiOperation({
-        summary: '게시글 삭제',
-        description: '지정한 ID의 게시글을 삭제합니다.',
-    })
-    @UseGuards(JwtAuthGuard) // 인증 가드 적용
-    async deleteBoard(
-        @Param('id', ParseIntPipe) id: number,
-        @GetUser() user: User, // 현재 로그인한 유저 정보 가져오기
-    ): Promise<{ success: boolean; message: string }> {
-        this.logger.log(`----- 게시글 삭제 요청 (ID: ${id}) -----`);
-
-        // deleteBoard가 async 함수이므로 await 추가
+    @ApiOperation({ summary: '게시글 삭제' })
+    @UseGuards(JwtAuthGuard)
+    async deleteBoard(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         await this.boardsService.deleteBoard(id, user);
-
-        this.logger.log(`@@@@@@ user ????? ${JSON.stringify(user)}`);
-        this.logger.log(`ID가 "${id}"인 게시글이 삭제되었습니다.`);
-        this.logger.log('--------------------------------------');
-
-        return {
-            success: true,
-            message: `ID가 "${id}"인 게시글이 성공적으로 삭제되었습니다. ✅`,
-        };
+        return { success: true, message: '성공적으로 삭제되었습니다. ✅' };
     }
 
-    // 4. 상태 수정
     @Patch('/:id/status')
-    @ApiOperation({
-        summary: '게시글 상태 수정',
-        description: '지정한 ID의 게시글 상태를 수정합니다.',
-    })
-    @ApiBody({
-        description: '게시글 상태 수정 DTO',
-        type: UpdateBoardStatusDto,
-    })
+    @ApiOperation({ summary: '게시글 상태 수정' })
     @UseGuards(JwtAuthGuard)
     async updateBoardStatus(
         @Param('id', ParseIntPipe) id: number,
-        @Body('status', BoardStatusValidationPipe) status: BoardStatus, // Body에서 직접 status를 받음
+        @Body('status', BoardStatusValidationPipe) status: BoardStatus,
         @GetUser() user: User,
-    ): Promise<{ success: boolean; message: string; board: Board }> {
-        this.logger.log(
-            `----- 게시글 상태 수정 요청 (ID: ${id}, 유저: ${user.username}) -----`,
-        );
-
-        // 서비스 호출 시 user 객체도 반드시 같이 넘겨줘야 권한 체크가 가능해!
-        const updatedBoard = await this.boardsService.updateBoardStatus(
-            id,
-            status,
-            user,
-        );
-
-        return {
-            success: true,
-            message: `ID가 "${id}"인 게시글이 성공적으로 상태변경 되었습니다. ✅`,
-            board: updatedBoard,
-        };
+    ) {
+        const updatedBoard = await this.boardsService.updateBoardStatus(id, status, user);
+        return { success: true, board: updatedBoard };
     }
 
-    // 4-1. 게시글 수정
     @Patch('/:id')
-    @ApiOperation({
-        summary: '게시글 수정',
-        description: '지정한 ID의 게시글을 수정합니다.',
-    })
-    @ApiBody({
-        description: '게시글 수정 DTO',
-        type: UpdateBoardDto,
-    })
+    @ApiOperation({ summary: '게시글 수정' })
     @UseGuards(JwtAuthGuard)
     async updateBoard(
         @Param('id', ParseIntPipe) id: number,
         @Body() updateBoardDto: UpdateBoardDto,
-        @GetUser() user:User
-    ): Promise<{ success: boolean; message: string, board: Board }> {
-        const updatdeBoard = await this.boardsService.updateBoard(id, updateBoardDto, user);
-
-        return {
-            success: true,
-            message: `ID가 "${id}"인 게시글이 성공적으로 수정되었습니다. ✅`,
-            board: updatdeBoard,
-        };
+        @GetUser() user: User,
+    ) {
+        const updatedBoard = await this.boardsService.updateBoard(id, updateBoardDto, user);
+        return { success: true, board: updatedBoard };
     }
 
-    // 5. 내가 쓴 게시글만 조회
     @Get('/my')
-    @ApiOperation({
-        summary: '내가 쓴 게시글 조회',
-        description: '현재 로그인한 사용자가 작성한 게시글만 조회합니다.',
-    })
-    @ApiBody({
-        description: '현재 로그인한 사용자 정보',
-    })
-    @UseGuards(AuthGuard()) // 인증 가드 적용
-    async getMyBoards(
-        @GetUser() user: User, // 현재 로그인한 유저 정보 가져오기
-    ): Promise<Board[]> {
-        this.logger.log(
-            `[My Boards] 유저 ${user.username}가 자신의 글 목록을 요청했습니다.`,
-        );
-        return this.boardsService.getMyBoards(user); // 새로운 서비스 함수 호출
+    @ApiOperation({ summary: '내가 쓴 게시글 조회' })
+    @UseGuards(AuthGuard())
+    async getMyBoards(@GetUser() user: User) {
+        return this.boardsService.getMyBoards(user);
     }
 }
