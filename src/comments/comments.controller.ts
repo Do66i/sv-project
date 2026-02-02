@@ -31,8 +31,11 @@ export class CommentsController {
     }
 
     @Patch(':id/like')
-    likeComment(@Param('id') id: string) {
-        return this.commentsService.likeComment(+id);
+    likeComment(
+        @Param('id') id: string,
+        @GetUser() user: User,
+    ) {
+        return this.commentsService.likeComment(+id, user);
     }
 
     @Patch(':id')

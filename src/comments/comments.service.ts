@@ -7,6 +7,7 @@ import { Comment, CommentResponse } from './entities/comment.entity';
 import { Repository } from 'typeorm';
 import { Board } from '../boards/entities/boards.entity';
 import { User } from '../auth/entities/user.entity';
+import { CommentLike } from './entities/comment-like.entity';
 
 @Injectable()
 export class CommentsService {
@@ -15,6 +16,8 @@ export class CommentsService {
         private commentRepository: Repository<Comment>,
         @InjectRepository(Board)
         private boardRepository: Repository<Board>, // 게시글 확인을 위해 주입
+        @InjectRepository(CommentLike)
+        private commentLikeRepository: Repository<CommentLike>,
     ) {}
 
     async create(createCommentDto: CreateCommentDto, user: User): Promise<CommentResponse> {
@@ -56,7 +59,7 @@ export class CommentsService {
         return `This action returns a #${id} comment`;
     }
 
-    async likeComment(id: number): Promise<{ success: boolean; message: string; data: CommentResponse }> {
+    async likeComment(id: number, user: User): Promise<{ success: boolean; message: string; data: CommentResponse }> {
         // 해당 댓글 찾기
         const comment = await this.commentRepository.findOneBy({ id });
 
@@ -65,15 +68,41 @@ export class CommentsService {
             throw new NotFoundException(`ID가 ${id}인 댓글을 찾을 수 없습니다.`);
         }
 
-        // 좋아요 수 1 증가
-        comment.likes += 1;
+        const existingLike = await this.commentLikeRepository.findOne({
+            where: {
+                comment: { id },
+                user: { id: user.id },
+            }
+        });
+
+        let message: string = '';
+
+
+        // 이미 좋아요 표시를 했다면 좋아요 삭제
+        console.log('>>>>>>>', this.commentLikeRepository)
+
+        if (existingLike) {
+            await this.commentLikeRepository.remove(existingLike);
+            comment.likes -= 1;
+            message = '좋아요 취소 반영 완료'
+        } else {
+            // 좋아요 표시를 하지 않았다면 좋아요 추가
+            const newLike = this.commentLikeRepository.create({
+                comment,
+                user
+            })
+            await this.commentLikeRepository.save(newLike);
+            comment.likes += 1;
+
+            message = '좋아요 반영 완료'
+        }
 
         // 저장
         const savedComment = await this.commentRepository.save(comment);
 
         return {
             success: true,
-            message: `댓글 ID ${id}의 좋아요 수가 증가되었습니다.`,
+            message: message,
             data: {
                 id: savedComment.id,
                 text: savedComment.text,
