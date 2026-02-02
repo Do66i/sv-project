@@ -1,6 +1,6 @@
-import { BoardStatus } from './boards.model';
-import { User } from '../auth/user.entity'; // [체크] 유저 엔티티를 정확히 가져와야 함
-import { Comment } from '../comments/entities/comment.entity';
+import { BoardStatus } from '../boards.model';
+import { User } from '../../auth/entities/user.entity'; // [체크] 유저 엔티티를 정확히 가져와야 함
+import { Comment } from '../../comments/entities/comment.entity';
 import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()

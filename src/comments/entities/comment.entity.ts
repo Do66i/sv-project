@@ -1,7 +1,7 @@
 // 데이터베이스 모델
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Board } from '../../boards/boards.model';
-import { User } from '../../auth/user.entity';
+import { User } from '../../auth/entities/user.entity';
 
 @Entity()
 export class Comment {

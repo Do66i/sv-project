@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Board } from './boards.entity'; // 인터페이스가 아닌 Entity를 가져옵니다.
-import { User } from '../auth/user.entity';
+import { Board } from './entities/boards.entity'; // 인터페이스가 아닌 Entity를 가져옵니다.
+import { User } from '../auth/entities/user.entity';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { BoardStatus } from './boards.model';
 import { BOARD_MESSAGES } from '../common/constants/error-messages';

@@ -1,6 +1,6 @@
 // 컨트롤러에서 로그인한 유저 정보를 아주 쉽게 가져오게 해주는 커스텀 데코레이터
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { User } from './user.entity';
+import { User } from '../entities/user.entity';
 
 // 요청(Request) 객체 안에 담긴 user 정보를 쏙 뽑아주는 역할
 export const GetUser = createParamDecorator(

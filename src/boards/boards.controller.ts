@@ -1,13 +1,13 @@
 import { Controller, Body, Get, Post, Logger, Param, Delete, Patch, UseGuards, ParseIntPipe, Query, } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { BoardStatus } from './boards.model';
-import { Board } from './boards.entity'; // 반드시 entity 파일이 존재해야 합니다!
+import { Board } from './entities/boards.entity'; // 반드시 entity 파일이 존재해야 합니다!
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardStatusDto } from './dto/update-board-status.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
-import { User } from '../auth/user.entity';
-import { GetUser } from '../auth/get-user.decorator';
+import { User } from '../auth/entities/user.entity';
+import { GetUser } from '../auth/decorators/get-user.decorator';
 import { BoardStatusValidationPipe } from './pipe/board-status-validation.pipe';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';

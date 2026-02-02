@@ -1,6 +1,6 @@
 import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn, Unique, } from 'typeorm';
-import { Board } from '../boards/boards.entity'; // 게시글 엔티티를 가져옴
-import { Comment } from '../comments/entities/comment.entity';
+import { Board } from '../../boards/entities/boards.entity'; // 게시글 엔티티를 가져옴
+import { Comment } from '../../comments/entities/comment.entity';
 
 @Entity()
 @Unique(['username'])
