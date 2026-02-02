@@ -6,15 +6,22 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { User } from './user.entity';
 import { JwtStrategy } from './jwt.strategy';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
     imports: [
         // 1. 유저 인증 전략 설정
         PassportModule.register({ defaultStrategy: 'jwt' }),
         // 2. JWT 설정
-        JwtModule.register({
-            secret: 'secretKey',
-            signOptions: { expiresIn: 3600 }, // 1시간 동안 유효한 토큰 (3600s = 1h)
+        JwtModule.registerAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: async (configService: ConfigService) => ({
+                secret: configService.get<string>('JWT_SECRET'),
+                signOptions: {
+                    expiresIn: 3600, // 1시간
+                },
+            }),
         }),
         // 3. User 엔티티를 이 모듈에서 사용하겠다고 선언!
         TypeOrmModule.forFeature([User]),
