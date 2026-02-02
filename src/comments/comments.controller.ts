@@ -30,6 +30,11 @@ export class CommentsController {
         return this.commentsService.findOne(+id);
     }
 
+    @Patch(':id/like')
+    likeComment(@Param('id') id: string) {
+        return this.commentsService.likeComment(+id);
+    }
+
     @Patch(':id')
     update(
         @Param('id') id: string,

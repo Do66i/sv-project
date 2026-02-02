@@ -56,14 +56,46 @@ export class CommentsService {
         return `This action returns a #${id} comment`;
     }
 
-    async update(id: number, user: User, updateCommentDto: UpdateCommentDto): Promise<{ success: boolean, message: string }>  {
+    async likeComment(id: number): Promise<{ success: boolean; message: string; data: CommentResponse }> {
+        // 해당 댓글 찾기
+        const comment = await this.commentRepository.findOneBy({ id });
+
+        // 댓글이 존재하지 않으면 예외 발생
+        if (!comment) {
+            throw new NotFoundException(`ID가 ${id}인 댓글을 찾을 수 없습니다.`);
+        }
+
+        // 좋아요 수 1 증가
+        comment.likes += 1;
+
+        // 저장
+        const savedComment = await this.commentRepository.save(comment);
+
+        return {
+            success: true,
+            message: `댓글 ID ${id}의 좋아요 수가 증가되었습니다.`,
+            data: {
+                id: savedComment.id,
+                text: savedComment.text,
+                likes: savedComment.likes,
+                isPrivate: savedComment.isPrivate,
+                createdAt: savedComment.createdAt,
+            },
+        };
+    }
+
+    async update(
+        id: number,
+        user: User,
+        updateCommentDto: UpdateCommentDto,
+    ): Promise<{ success: boolean; message: string }> {
         // 내가 쓴 댓글인지 확인
         const comment = await this.commentRepository.findOne({
             where: {
                 id,
-                user: { id: user.id }
-            }
-        })
+                user: { id: user.id },
+            },
+        });
 
         // 새로 작성한 댓글로 업데이트
         if (!comment) {
@@ -79,16 +111,16 @@ export class CommentsService {
         // 성공 메시지 반환
         return {
             success: true,
-            message: '댓글이 성공적으로 수정되었습니다.'
+            message: '댓글이 성공적으로 수정되었습니다.',
         };
     }
 
-    async remove(id: number, user: User): Promise<{ success: boolean,message:string}> {
+    async remove(id: number, user: User): Promise<{ success: boolean; message: string }> {
         // 내가 쓴 댓글인지 확인하며 조회 (id, userId 모두 일치해야함)
         const result = await this.commentRepository.delete({
             id,
-            user: { id: user.id }
-        })
+            user: { id: user.id },
+        });
 
         // 삭제된 데이터가 없는 경우(내 댓글이 아니거나, 존재하지 않는 경우)
         if (result.affected === 0) {
@@ -98,7 +130,7 @@ export class CommentsService {
         // 성공 메시지 반환
         return {
             success: true,
-            message: '댓글이 성공적으로 삭제되었습니다.'
+            message: '댓글이 성공적으로 삭제되었습니다.',
         };
     }
 }
