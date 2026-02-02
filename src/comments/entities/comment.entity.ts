@@ -1,6 +1,6 @@
 // 데이터베이스 모델
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Board } from '../../boards/boards.model';
+import { Board } from '../../boards/entities/boards.entity';
 import { User } from '../../auth/entities/user.entity';
 
 @Entity()
