@@ -56,8 +56,31 @@ export class CommentsService {
         return `This action returns a #${id} comment`;
     }
 
-    update(id: number, updateCommentDto: UpdateCommentDto) {
-        return `This action updates a #${id} comment`;
+    async update(id: number, user: User, updateCommentDto: UpdateCommentDto): Promise<{ success: boolean, message: string }>  {
+        // 내가 쓴 댓글인지 확인
+        const comment = await this.commentRepository.findOne({
+            where: {
+                id,
+                user: { id: user.id }
+            }
+        })
+
+        // 새로 작성한 댓글로 업데이트
+        if (!comment) {
+            throw new NotFoundException(`ID가 ${id}인 댓글을 찾을 수 없거나 수정 권한이 없습니다.`);
+        }
+
+        // 객체에 새로운 데이터 덮어쓰기 (text, isPrivate 등이 선택적으로 업데이트됨)
+        Object.assign(comment, updateCommentDto);
+
+        // 업데이트 수행
+        await this.commentRepository.save(comment);
+
+        // 성공 메시지 반환
+        return {
+            success: true,
+            message: '댓글이 성공적으로 수정되었습니다.'
+        };
     }
 
     async remove(id: number, user: User): Promise<{ success: boolean,message:string}> {
