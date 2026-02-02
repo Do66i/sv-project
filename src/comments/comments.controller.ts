@@ -36,7 +36,10 @@ export class CommentsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.commentsService.remove(+id);
+  remove(
+      @Param('id') id: string,
+      @GetUser() user: User // 로그인 한 정보 가져오기
+  ) {
+    return this.commentsService.remove(+id, user);
   }
 }

@@ -60,7 +60,22 @@ export class CommentsService {
         return `This action updates a #${id} comment`;
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} comment`;
+    async remove(id: number, user: User): Promise<{ success: boolean,message:string}> {
+        // 내가 쓴 댓글인지 확인하며 조회 (id, userId 모두 일치해야함)
+        const result = await this.commentRepository.delete({
+            id,
+            user: { id: user.id }
+        })
+
+        // 삭제된 데이터가 없는 경우(내 댓글이 아니거나, 존재하지 않는 경우)
+        if (result.affected === 0) {
+            throw new NotFoundException(`ID가 ${id}인 댓글을 찾을 수 없거나 삭제 권한이 없습니다.`);
+        }
+
+        // 성공 메시지 반환
+        return {
+            success: true,
+            message: '댓글이 성공적으로 삭제되었습니다.'
+        };
     }
 }
