@@ -3,6 +3,15 @@ import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } f
 import { Board } from '../../boards/entities/boards.entity';
 import { User } from '../../auth/entities/user.entity';
 
+// 응답 전용 인터페이스 정의 (수출해서 서비스에서도 쓸 수 있게 export)
+export interface CommentResponse {
+    id: number;
+    text: string;
+    likes: number;
+    isPrivate: boolean;
+    createdAt: Date;
+}
+
 @Entity()
 export class Comment {
     @PrimaryGeneratedColumn() // 기본 키 자동 생성
