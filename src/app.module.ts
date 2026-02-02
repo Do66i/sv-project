@@ -4,6 +4,7 @@ import { BoardsModule } from './boards/boards.module';
 import { AuthModule } from './auth/auth.module'; // AuthModule만 가져옵니다.
 import { LoggerMiddleware } from './logger/logger.middleware';
 import { ConfigModule } from '@nestjs/config';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
     imports: [
@@ -23,7 +24,8 @@ import { ConfigModule } from '@nestjs/config';
             synchronize: process.env.NODE_ENV !== 'production', // 프로덕션에선 false 권장
         }),
         BoardsModule,
-        AuthModule, // 인증 관련은 여기서 다 처리합니다.
+        AuthModule,
+        CommentsModule, // 인증 관련은 여기서 다 처리합니다.
     ],
     // AppModule은 AppController와 AppService만 관리합니다.
 })
