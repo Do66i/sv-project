@@ -7,6 +7,11 @@ import { CreateBoardDto } from './dto/create-board.dto';
 import { BoardStatus } from './boards.model';
 import { BOARD_MESSAGES } from '../common/constants/error-messages';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { Comment } from 'src/comments/entities/comment.entity';
+
+interface CommentWithChildren extends Comment {
+    children: CommentWithChildren[];
+}
 
 @Injectable()
 export class BoardsService {
@@ -58,32 +63,46 @@ export class BoardsService {
         // relations에 'comments.user'를 써서 댓글 쓴 사람 정보까지 가져옴
         const board = await this.boardRepository.findOne({
             where: { id },
-            relations: ['user', 'comments', 'comments.user'],
+            relations: ['user', 'comments', 'comments.user', 'comments.parent'],
         });
 
         if (!board) {
             throw new NotFoundException(BOARD_MESSAGES.NOT_FOUND(id.toString()));
-        };
+        }
 
-        // 댓글 필터링 (배열이기 때문에 한 번 돌려줘야함)
-        board.comments = board.comments.map(el => {
-            // [조건 체크]
-            // 1. 비밀 댓글이 아니면 통과
-            // 2. 로그인한 유저가 게시글 작성자(board.user.id)면 통과
-            // 3. 로그인한 유저가 댓글 작성자(comment.user.id)면 통과
-            const isWriter = user && ( user.id === board.user.id || user.id === el.user.id);
+        // 댓글 트리 구조를 만들기 위한 맵과 루트 댓글 배열
+        const commentMap = new Map<Number, CommentWithChildren>();
+        const rootComments: CommentWithChildren[] = [];
 
-            // 권한이 없으면 내용이 바뀜
-            if (el.isPrivate && !isWriter) {
-                return {
-                    ...el, // 기존 댓글의 다른 데이터(id, likes 등)는 유지하고
-                    text: '비밀 댓글입니다. 😎', // text만 변경
-                };
+        // 댓글들을 맵에 저장하고, 자식 댓글 배열 초기화
+        board.comments.forEach((comment) => {
+            const isAuthor = user && user.id === comment.user.id;
+            const isBoardOwner = user && user.id === board.user.id;
+            const showComment = !comment.isPrivate || isAuthor || isBoardOwner;
+
+            // 기존 데이터에 children 배열을 추가해서 확장된 객체 생성
+            const commentWithChildren: CommentWithChildren = {
+                ...comment,
+                text: showComment ? comment.text : '비밀 댓글입니다. 🔒',
+                children: [],
+            };
+
+            commentMap.set(comment.id, commentWithChildren);
+        });
+
+        // 부모-자식 관계 맺기
+        commentMap.forEach((comment) => {
+            if (comment.parent) {
+                const parent = commentMap.get(comment.parent.id);
+                if (parent) {
+                    parent.children.push(comment);
+                }
+            } else {
+                rootComments.push(comment);
             }
-
-            return el;
         })
 
+        board.comments = rootComments as unknown as Comment[];
 
         return board;
     }
