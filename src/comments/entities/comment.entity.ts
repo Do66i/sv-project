@@ -1,5 +1,5 @@
 // 데이터베이스 모델
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Board } from '../../boards/entities/boards.entity';
 import { User } from '../../auth/entities/user.entity';
 
@@ -36,4 +36,14 @@ export class Comment {
     @ManyToOne(() => User, (user) => user.comments)
     user: User;
 
+    // 이 댓글이 누구의 대댓글인지
+    // nullable: true는 일반 댓글(부모 없는 댓글)도 가능
+    @ManyToOne(
+        ()=> Comment, (comment) => comment.children, { nullable: true }
+    )
+    parent : Comment;
+
+    // 이 댓글의 대댓글 목록
+    @OneToMany(() => Comment, (comment) => comment.parent)
+    children: Comment[];
 }
