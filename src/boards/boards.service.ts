@@ -53,17 +53,39 @@ export class BoardsService {
     }
 
     // 3. ID로 게시글 찾기 (검증 포함)
-    async getBoardById(id: number): Promise<Board> {
+    async getBoardById(id: number, user: User): Promise<Board> {
         // MySQL 자동생성 ID는 보통 number입니다.
-        const found = await this.boardRepository.findOneBy({ id });
+        // relations에 'comments.user'를 써서 댓글 쓴 사람 정보까지 가져옴
+        const board = await this.boardRepository.findOne({
+            where: { id },
+            relations: ['user', 'comments', 'comments.user'],
+        });
 
-        if (!found) {
-            throw new NotFoundException(
-                BOARD_MESSAGES.NOT_FOUND(id.toString()),
-            );
-        }
+        if (!board) {
+            throw new NotFoundException(BOARD_MESSAGES.NOT_FOUND(id.toString()));
+        };
 
-        return found;
+        // 댓글 필터링 (배열이기 때문에 한 번 돌려줘야함)
+        board.comments = board.comments.map(el => {
+            // [조건 체크]
+            // 1. 비밀 댓글이 아니면 통과
+            // 2. 로그인한 유저가 게시글 작성자(board.user.id)면 통과
+            // 3. 로그인한 유저가 댓글 작성자(comment.user.id)면 통과
+            const isWriter = user && ( user.id === board.user.id || user.id === el.user.id);
+
+            // 권한이 없으면 내용이 바뀜
+            if (el.isPrivate && !isWriter) {
+                return {
+                    ...el, // 기존 댓글의 다른 데이터(id, likes 등)는 유지하고
+                    text: '비밀 댓글입니다. 😎', // text만 변경
+                };
+            }
+
+            return el;
+        })
+
+
+        return board;
     }
 
     // 4. 게시글 삭제하기

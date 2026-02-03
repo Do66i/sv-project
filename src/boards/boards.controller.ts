@@ -28,6 +28,24 @@ export class BoardsController {
         return { success: result.length > 0, result };
     }
 
+    @Get('/:id')
+    @ApiOperation({ summary: '게시글 상세 조회', description: 'ID로 특정 게시글의 상세 정보를 조회합니다.' })
+    // 비밀글 판별로 유저 정보가 필요하기 때문에 가드처리
+    @UseGuards(AuthGuard())
+    async getBoardById(
+        @Param('id', ParseIntPipe) id: number,
+        @GetUser() user: User
+    ) {
+        this.logger.log(`----- 게시글 상세 조회 요청 (ID: ${id}) -----`);
+
+        const board = await this.boardsService.getBoardById(id, user);
+        return {
+            success: true,
+            message: '게시글이 성공적으로 조회되었습니다. ✅',
+            board
+        };
+    }
+
     @Post()
     @ApiOperation({ summary: '게시글 생성' })
     @UseGuards(AuthGuard())
@@ -36,7 +54,11 @@ export class BoardsController {
         @GetUser() user: User,
     ) {
         const board = await this.boardsService.createBoard(createBoardDto, user);
-        return { board, message: '게시글이 성공적으로 생성되었습니다. ✅' };
+        return {
+            success: true,
+            message: '게시글이 성공적으로 생성되었습니다. ✅',
+            board
+        };
     }
 
     @Delete('/:id')
@@ -56,7 +78,10 @@ export class BoardsController {
         @GetUser() user: User,
     ) {
         const updatedBoard = await this.boardsService.updateBoardStatus(id, status, user);
-        return { success: true, board: updatedBoard };
+        return {
+            success: true,
+            message: '게시글 상태가 성공적으로 업데이트되었습니다. ✅',
+            board: updatedBoard };
     }
 
     @Patch('/:id')
@@ -68,7 +93,10 @@ export class BoardsController {
         @GetUser() user: User,
     ) {
         const updatedBoard = await this.boardsService.updateBoard(id, updateBoardDto, user);
-        return { success: true, board: updatedBoard };
+        return {
+            success: true,
+            message: '게시글이 성공적으로 수정되었습니다. ✅',
+            board: updatedBoard };
     }
 
     @Get('/my')
