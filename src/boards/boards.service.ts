@@ -22,9 +22,7 @@ export class BoardsService {
 
     // 1. 모든 게시글 가져오기
     async getAllBoards(search?: string): Promise<Board[]> {
-        const query = this.boardRepository
-            .createQueryBuilder('board')
-            .leftJoinAndSelect('board.user', 'user'); // relations: ['user']와 똑같은 역할!
+        const query = this.boardRepository.createQueryBuilder('board').leftJoinAndSelect('board.user', 'user'); // relations: ['user']와 똑같은 역할!
         // note: createQueryBuilder ? TypeORM에서 제공하는 쿼리 빌더로, 복잡한 쿼리를 작성할 때 유용합니다.
 
         if (search) {
@@ -40,10 +38,7 @@ export class BoardsService {
     }
 
     // 2. 게시글 생성하기
-    async createBoard(
-        createBoardDto: CreateBoardDto,
-        user: User,
-    ): Promise<Board> {
+    async createBoard(createBoardDto: CreateBoardDto, user: User): Promise<Board> {
         const { title, description } = createBoardDto;
 
         const board = this.boardRepository.create({
@@ -58,7 +53,7 @@ export class BoardsService {
     }
 
     // 3. ID로 게시글 찾기 (검증 포함)
-    async getBoardById(id: number, user: User): Promise<Board> {
+    async getBoardById(id: number, user: User): Promise<Board & { commentCount: number }> {
         // MySQL 자동생성 ID는 보통 number입니다.
         // relations에 'comments.user'를 써서 댓글 쓴 사람 정보까지 가져옴
         const board = await this.boardRepository.findOne({
@@ -73,6 +68,7 @@ export class BoardsService {
         // 댓글 트리 구조를 만들기 위한 맵과 루트 댓글 배열
         const commentMap = new Map<Number, CommentWithChildren>();
         const rootComments: CommentWithChildren[] = [];
+        let totalCount = 0; // 전체 댓글 수
 
         // 댓글들을 맵에 저장하고, 자식 댓글 배열 초기화
         board.comments.forEach((comment) => {
@@ -88,6 +84,7 @@ export class BoardsService {
             };
 
             commentMap.set(comment.id, commentWithChildren);
+            totalCount++; // 댓글(일반/대댓글 불문)이 존재하면 무조건 카운트 업
         });
 
         // 부모-자식 관계 맺기
@@ -100,11 +97,12 @@ export class BoardsService {
             } else {
                 rootComments.push(comment);
             }
-        })
+        });
 
         board.comments = rootComments as unknown as Comment[];
 
-        return board;
+        // Object.assign을 사용하여 엔티티 메서드를 유지하며 속성 추가
+        return Object.assign(board, { commentCount: totalCount });
     }
 
     // 4. 게시글 삭제하기
@@ -116,26 +114,18 @@ export class BoardsService {
 
         // delete 결과에 영향을 받은 행(affected)이 0개면 에러
         if (result.affected === 0) {
-            throw new NotFoundException(
-                BOARD_MESSAGES.NOT_FOUND(id.toString()),
-            );
+            throw new NotFoundException(BOARD_MESSAGES.NOT_FOUND(id.toString()));
         }
     }
 
     // 5. 게시글 상태 변경하기
-    async updateBoardStatus(
-        id: number,
-        status: BoardStatus,
-        user: User,
-    ): Promise<Board> {
+    async updateBoardStatus(id: number, status: BoardStatus, user: User): Promise<Board> {
         const board = await this.boardRepository.findOne({
             where: { id, user: { id: user.id } },
         });
 
         if (!board) {
-            throw new NotFoundException(
-                BOARD_MESSAGES.NOT_FOUND(id.toString()),
-            );
+            throw new NotFoundException(BOARD_MESSAGES.NOT_FOUND(id.toString()));
         }
 
         board.status = status;
@@ -145,11 +135,7 @@ export class BoardsService {
     }
 
     // 5-1. 게시글 수정하기
-    async updateBoard(
-        id: number,
-        updateBoardDto: UpdateBoardDto,
-        user: User
-    ): Promise<Board> {
+    async updateBoard(id: number, updateBoardDto: UpdateBoardDto, user: User): Promise<Board> {
         const { title, description } = updateBoardDto;
 
         // 내 게시글인지 확인
@@ -158,9 +144,7 @@ export class BoardsService {
         });
 
         if (!board) {
-            throw new NotFoundException(
-                BOARD_MESSAGES.NOT_FOUND(id.toString()),
-            );
+            throw new NotFoundException(BOARD_MESSAGES.NOT_FOUND(id.toString()));
         }
 
         // 업데이트할 필드만 수정
