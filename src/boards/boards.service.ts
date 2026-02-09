@@ -107,7 +107,7 @@ export class BoardsService {
 
     // 4. 게시글 삭제하기
     async deleteBoard(id: number, user: User): Promise<void> {
-        const result = await this.boardRepository.delete({
+        const result = await this.boardRepository.softDelete({
             id,
             user: { id: user.id }, // 작성자 ID로 조건 추가
         });

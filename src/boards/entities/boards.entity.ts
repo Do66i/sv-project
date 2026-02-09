@@ -1,7 +1,7 @@
 import { BoardStatus } from '../boards.model';
 import { User } from '../../auth/entities/user.entity'; // [체크] 유저 엔티티를 정확히 가져와야 함
 import { Comment } from '../../comments/entities/comment.entity';
-import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity, Column, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Board extends BaseEntity {
@@ -23,4 +23,7 @@ export class Board extends BaseEntity {
     // 추가: 게시글 하나에는 여러 댓글이 달림
     @OneToMany(() => Comment, (comment) => comment.board, { eager: true }) // 게시글 볼 때 댓글도 바로 보이게 eager 설정 가능
     comments: Comment[];
+
+    @DeleteDateColumn() // 소프트 삭제를 위한 컬럼 (삭제시 날짜가 자동기록)
+    deletedAt: Date;
 }
