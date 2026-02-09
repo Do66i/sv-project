@@ -14,7 +14,11 @@ export class Board extends BaseEntity {
     @Column()
     description: string;
 
-    @Column()
+    @Column({
+        type: 'enum',
+        enum: BoardStatus,
+        default: BoardStatus.PUBLIC, // 기본값 설정 (선택사항이지만 추천)
+    })
     status: BoardStatus;
 
     @ManyToOne((type) => User, (user) => user.boards, { eager: false })

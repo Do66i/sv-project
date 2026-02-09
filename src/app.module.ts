@@ -5,6 +5,8 @@ import { AuthModule } from './auth/auth.module'; // AuthModule만 가져옵니�
 import { LoggerMiddleware } from './logger/logger.middleware';
 import { ConfigModule } from '@nestjs/config';
 import { CommentsModule } from './comments/comments.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
     imports: [
@@ -28,6 +30,8 @@ import { CommentsModule } from './comments/comments.module';
         CommentsModule, // 인증 관련은 여기서 다 처리합니다.
     ],
     // AppModule은 AppController와 AppService만 관리합니다.
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
